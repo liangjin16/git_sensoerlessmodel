@@ -1,0 +1,44 @@
+function [idref,iqref,PI] = Fieldweaken(ud,uq,Is,kp_FW1,ki_FW1,kp_FW2,ki_FW2,umax,imax,err_q,err_d)
+
+persistent us gama uout ui temp id1 iq1 kp_FW ki_FW;
+
+isempty (us)
+us=0;gama=0;ui=0;temp=0;uout=0;id1=0;iq1=0;kp_FW=0;kp_FW=0;PI=0;
+
+err_q = abs(err_q);
+err_d = abs(err_d);
+
+us = sqrt(ud.^2+uq.^2);
+if((Is>=0.98*imax)||err_q>=2)
+    kp_FW = kp_FW2;
+    ki_FW = ki_FW2;
+else
+    kp_FW = kp_FW1;
+    ki_FW = ki_FW1;
+end
+
+if(us<umax)
+    id1 = 0; iq1 = Is;
+elseif(us>=umax)
+    temp = umax - us;
+    ui = ui + temp;
+    uout = kp_FW*temp+ki_FW*ui;
+    if(uout>=0)
+        uout = 0;
+    elseif(uout<=-pi/2)
+        uout = -pi/2;
+    end
+
+    uout = uout+0.02*(gama-uout);
+    gama = uout;
+    iq1 = Is*cos(gama);
+    id1 = Is*sin(gama);
+end
+
+if (id1<-imax)
+    id1 = -imax;
+end
+
+idref = id1;
+iqref = iq1;
+PI = kp_FW;
